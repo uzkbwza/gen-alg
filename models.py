@@ -11,6 +11,8 @@ class Model:
 
     def __init__(self, length, gene_candidates=[], gene_length=0, mutation_probability=10, mutation_amount=10):
         self.length = length
+        if length < 5:
+            raise Exception("Generation length must be >= 5")
         self.gene_candidates = gene_candidates
         self.gene_length = gene_length
         self.population = []
@@ -34,16 +36,25 @@ class Model:
 
         self.fit_sort()
 
+        # 1/10 of next generation will be randomly created
+        num_random_creations = 10 *  self.length // 100
+        if num_random_creations == 0:
+            num_random_creations = 1
+
+        random_individuals = [self._create_individual() for i in range(num_random_creations)]
+        
         fitness_sum = sum([individual.fitness for individual in self.population])
 
         # Best individual from last generation is kept,
-        # as well as a child of the best and third best.
+        # as well as a child of the best and third best,
+        # and a few completely random individuals
         next_generation = [self.population[0],self.breed(self.population[0],self.population[2])]
-        for i in range(self.length - 2):
+        for i in range(self.length - 2 - num_random_creations):
             parents = []
             for i in range(2): parents.append(self._exponential_rank_selection())
             next_generation.append(self.breed(parents[0],parents[1]))
-
+        
+        next_generation.extend(random_individuals)
         self.population = next_generation
         self.generation += 1
         
@@ -53,6 +64,7 @@ class Model:
         return child
 
     def _roulette_selection(self,fitness_sum):
+        """not currently being used"""
         selection = random.random() * fitness_sum
         loop_sum = 0
         for individual in self.population:
@@ -67,11 +79,12 @@ class Model:
         pop_list.reverse()
 
         for i, individual in enumerate(self.population):
-            rank = i**2
+            rank = i
             rank_dict[individual] = rank
         rank_sum = sum(rank_dict.values())
         selection = random.random() * rank_sum
         loop_sum = 0
+
         for individual, ranking in rank_dict.items(): 
             loop_sum += ranking
             if loop_sum >= selection:

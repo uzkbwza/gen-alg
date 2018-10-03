@@ -12,7 +12,7 @@ mutation_amount = 90
 generations = 10000
 
 population = Model(
-        100,
+        50,
         gene_candidates=gene_candidates,
         gene_length=gene_length,
         mutation_probability=mutation_probability,
