@@ -7,7 +7,7 @@ PASSWD = input("Give passwd: ")
 gene_candidates = string.ascii_letters + string.digits + string.punctuation + " " 
 gene_length = len(PASSWD)
 mutation_probability = 50
-mutation_amount = 90
+mutation_amount = 10
 generations = 10000
 pop_size = 50
 
