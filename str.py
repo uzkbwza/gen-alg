@@ -1,6 +1,5 @@
 #!/usr/bin/python
 from models import *
-from words import fitness
 import string
 
 PASSWD = input("Give passwd: ")
@@ -21,6 +20,22 @@ population = Model(
         )
 
 population.fit_sort()
+
+def fitness(password,test_word):
+    """
+    Evaluates fitness level based on similarity of input word to given password
+    """
+    
+    if len(password) != len(test_word):
+        print("Incompatible sizes")
+        return
+    score = 0
+    
+    for i, pass_char in enumerate(password):
+        if test_word[i] == pass_char:
+            score += 1
+    fitness = score * 100 / len(password)
+    return fitness 
 
 
 def main():
