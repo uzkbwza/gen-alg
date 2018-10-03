@@ -10,13 +10,14 @@ gene_length = len(PASSWD)
 mutation_probability = 50
 mutation_amount = 90
 generations = 10000
+pop_size = 50
 
 population = Model(
-        50,
+        pop_size,
         gene_candidates=gene_candidates,
         gene_length=gene_length,
         mutation_probability=mutation_probability,
-        mutation_amount=10
+        mutation_amount=mutation_amount
         )
 
 population.fit_sort()
