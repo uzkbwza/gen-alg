@@ -1,61 +1,41 @@
 #!/usr/bin/python
 from models import *
 import string
+import timeit
 
 PASSWD = input("Give passwd: ")
 
-gene_candidates = string.ascii_letters + string.digits + string.punctuation + " " 
+dna = string.ascii_letters + string.digits + string.punctuation + " " 
 gene_length = len(PASSWD)
-mutation_probability = 50
-mutation_amount = 10
-generations = 10000
 pop_size = 50
+elites = 2
 
-population = Model(
-        pop_size,
-        gene_candidates=gene_candidates,
-        gene_length=gene_length,
-        mutation_probability=mutation_probability,
-        mutation_amount=mutation_amount
-        )
-
-population.fit_sort()
-
-def fitness(password,test_word):
+def fitness(individual):
     """
     Evaluates fitness level based on similarity of input word to given password
     """
+    test_word = "".join(individual.chromosome)
     
-    if len(password) != len(test_word):
+    if len(PASSWD) != len(test_word):
         print("Incompatible sizes")
         return
     score = 0
-    
-    for i, pass_char in enumerate(password):
+    for i, pass_char in enumerate(PASSWD):
         if test_word[i] == pass_char:
             score += 1
-    fitness = score * 100 / len(password)
+    fitness = score * 100 / len(PASSWD)
     return fitness 
 
+model = Model(
+        pop_size,
+        dna=dna,
+        gene_length=gene_length,
+        elites = elites
+)
 
-def main():
-    while True:
-        for individual in population.population:
-            test_word = "".join(individual.genes)
-            individual.fitness = fitness(PASSWD,test_word)
+model.set_fitness_method(fitness)
 
-        population.fit_sort()
-
-        reverse = population.population
-        reverse.reverse()
-        for individual in reverse:
-            print("".join(individual.genes))
-        print("Generation {}, max fitness: {}".format(population.generation,population.get_best_individual().fitness)) 
-
-        if population.get_best_individual().fitness != 100:
-            population.next()
-        else:
-            print(population.get_best_individual().genes)
-            return
-
-main()
+start = timeit.default_timer()
+model.run(max_fitness=100)
+end = timeit.default_timer()
+print(end-start)
