@@ -1,10 +1,7 @@
 #!/usr/bin/python
 from copy import copy
 from pprint import pprint
-import hashlib
-from time import sleep
 import random
-import numpy as np
 
 import selections
 import mutations
@@ -14,15 +11,14 @@ class Model:
     Contains and processes a population of individuals.
     """
 
-    def __init__(self, pop_size=50, dna=[], gene_length=0, elites=2, mutation_probability=10,crossover_probability=90):
+    def __init__(self, pop_size=50, dna=[], gene_length=0, elites=3, mutation_probability=5,crossover_probability=50):
         self.pop_size = pop_size
         self.dna = dna
         self.gene_length = gene_length
-        self.elites = elites
         self.population = []
         self.crossover_probability = crossover_probability
         self.mutation_probability = mutation_probability
-
+        self.elites = elites
         self._selection_method = selections.roulette
         self._mutation_method = mutations.simple
     

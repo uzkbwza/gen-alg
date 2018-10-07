@@ -6,10 +6,9 @@ import timeit
 # PASSWD = input("Give passwd: ")
 PASSWD = "____________________________________________"
 
-dna = ["_","a","b","c","1","2","3"]# string.ascii_letters + string.digits + string.punctuation + " " 
+dna = string.ascii_letters + string.digits + string.punctuation + " " 
 gene_length = len(PASSWD)
-pop_size = 100
-elites = 30
+pop_size = 50
 
 def fitness(individual):
     """
@@ -27,12 +26,11 @@ model = Model(
         pop_size,
         dna=dna,
         gene_length=gene_length,
-        elites = elites
 )
 
 model.set_fitness_method(fitness)
 start = timeit.default_timer()
-model.run(max_fitness=100,interval=1)
+model.run(max_fitness=100,interval=100)
 print("0")
 end = timeit.default_timer()
 print(end-start)
