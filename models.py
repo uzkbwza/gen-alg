@@ -1,7 +1,8 @@
 #!/usr/bin/python
+from copy import copy
+from pprint import pprint
 import hashlib
 from time import sleep
-from copy import copy
 import random
 import numpy as np
 
@@ -22,7 +23,7 @@ class Model:
         self.crossover_probability = crossover_probability
         self.mutation_probability = mutation_probability
 
-        self._selection_method = selections.linear_rank
+        self._selection_method = selections.roulette
         self._mutation_method = mutations.simple
     
     def set_fitness_method(self, funct):
@@ -33,14 +34,14 @@ class Model:
         unless you really know what you're doing."""
         self._selection_method = funct
 
-    def evaluate(self):
+    def evaluate(self,population):
         if not self._fitness_method:
             raise Exception(
                     "A fitness evaluation function is needed to evaluate fitness!" \
                     "Please create and set one using set_fitness_method.")
-        for individual in self.population:
+        for individual in population:
             individual.fitness = self._fitness_method(individual)
-        self._sort(self.population)
+        self._sort(population)
 
     def populate(self):
         """Randomly generates individuals to fill new population"""
@@ -48,25 +49,41 @@ class Model:
         self.generation = 0
         print("Created random population")
 
+    def breed(self,parent_a,parent_b):
+
+        new_chromosome = random.choice([parent_a.chromosome,parent_b.chromosome])
+        if random.randint(0,100) < self.crossover_probability:
+            new_chromosome = []
+            crossover_point = random.randint(0,self.gene_length)
+            for i in range(self.gene_length):
+                new_chromosome.append(random.choice([parent_a.chromosome[i],parent_b.chromosome[i]]))
+        child = self._generate_individual()
+        child.chromosome = new_chromosome.copy()
+        child._mutation_method(child)
+        return child
+
     def select(self):
         """Select individuals to pass on their chromosome to the next generation
         using method defined in set_selection_method"""
         
-        self._sort(self.population)
+        current_gen = self.population
         next_generation = [] 
 
         # Make sure the fittest of last generation cross through
         if self.elites: 
-            next_generation = self.population[-self.elites::]
-        
+            next_generation.extend(current_gen[-self.elites:])
+            # pprint(["".join(i.chromosome) for i in next_generation])
 
-        for i in range(self.pop_size - len(next_generation)):
-            parent_a = self._selection_method(self)
-            parent_b = self._selection_method(self)
-            child = parent_a.breed(parent_b)
+
+        for i in range(self.pop_size - self.elites): 
+            parent_a = self._selection_method(current_gen)
+            parent_b = self._selection_method(current_gen)
+            child = self.breed(parent_a,parent_b)
             next_generation.append(child)
 
-        self._sort(self.population)
+        for individual in next_generation:
+            individual.fitness = 1
+
 
         return next_generation
 
@@ -76,10 +93,6 @@ class Model:
         fit_max = pop[-1].fitness
         fit_avg = sum([individual.fitness for individual in pop]) / len(pop)
         dna = str(pop[-1]).encode()
-        hash_ = hashlib.md5(dna)
-        hashtxt = hash_.hexdigest()[:8]
-
-
 
 
         format_tuple = (
@@ -87,10 +100,10 @@ class Model:
             fit_min,
             fit_max,
             fit_avg,
-            hashtxt,
             "".join(pop[-1].chromosome))
 
-        print("Generation {0:<5} ║ Fit Max/Min/Avg: {2:<5.1f} / {1:^5.1f} / {3:>5.1f} ║ Best: {4},\nChromosome: {5}\n".format(*format_tuple))
+#        pprint([["".join(i.chromosome),i.fitness] for i in self.population][-15:])
+        print("Generation {0:<5} ║ Fit Max/Min/Avg: {2:<5.1f} / {1:^5.1f} / {3:>5.1f} ║ \nChromosome: {4}\n".format(*format_tuple))
         
     
     def process(self,max_fitness,interval):
@@ -100,7 +113,7 @@ class Model:
 
         # Main loop
         while True:
-            self.evaluate()
+            self.evaluate(self.population)
             best = self.population[-1]
             if best.fitness >= max_fitness:
                 return best
@@ -113,6 +126,7 @@ class Model:
             self.generation += 1
        
     def run(self,max_fitness=None,interval=10):
+        "2"
         if not self.population:
             self.populate()
         self.print_gen(self.population)
@@ -143,21 +157,13 @@ class Individual:
     """
     Contains a chromosome and a fitness.
     """
-    def __init__(self, chromosome, dna, fitness=1):
+    def __init__(self, chromosome, dna, fitness=0):
         self.fitness = fitness
         self.chromosome = chromosome
         self.dna = dna
+        self.evaluated = False
 
-    def __str__(self):
-        return "Genome: {}\nFitness: {}\n".format("".join(self.chromosome),self.fitness)
+    def __repr__(self):
+        return "{}".format("".join(self.chromosome),self.fitness)
     
-    def breed(self,other):
-        for i in range(random.randint(0,self.crossover_probability)):
-            crossover_point = random.randint(0,len(self.chromosome))
-            new_chromosome = self.chromosome[:crossover_point] + other.chromosome[crossover_point:]
-        child = copy(self)
-        child.fitness = 0
-        child.chromosome = new_chromosome
-        self._mutation_method(child)
-        return child
 

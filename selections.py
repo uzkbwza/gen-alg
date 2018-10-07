@@ -3,19 +3,18 @@ import numpy as np
 from collections import OrderedDict 
 from pprint import pprint
 
-def roulette(model):
-    fitness_sum = sum([individual.fitness for individual in model.population]) 
+def roulette(pop):
+    fitness_sum = sum([individual.fitness for individual in pop]) 
     selection = random.random() * fitness_sum
     loop_sum = 0
-    for individual in model.population:
+    for individual in pop:
         loop_sum += individual.fitness
         if loop_sum >= selection:
             return individual
 
-def linear_rank(model):
+def linear_rank(pop):
     rank_dict = OrderedDict()
-    pop_list = model.population
-    for i, individual in enumerate(model.population):
+    for i, individual in enumerate(pop):
         rank = i
         rank_dict[individual] = rank
     rank_sum = sum(rank_dict.values())
