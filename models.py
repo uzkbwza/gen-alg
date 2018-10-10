@@ -3,6 +3,7 @@ from copy import copy
 from pprint import pprint
 import random
 
+import crossover
 import selections
 import mutations
 
@@ -11,16 +12,18 @@ class Model:
     Contains and processes a population of individuals.
     """
 
-    def __init__(self, pop_size=50, dna=[], gene_length=0, elites=3, mutation_probability=5,crossover_probability=50):
+    def __init__(self, pop_size=50, dna=[], chromosome_length=0, elites=3, mutation_probability=1,crossover_probability=90):
         self.pop_size = pop_size
         self.dna = dna
-        self.gene_length = gene_length
+        self.chromosome_length = chromosome_length
         self.population = []
         self.crossover_probability = crossover_probability
         self.mutation_probability = mutation_probability
         self.elites = elites
-        self._selection_method = selections.roulette
-        self._mutation_method = mutations.simple
+
+        self.set_selection_method(selections.roulette)
+        self.set_mutation_method(mutations.simple)
+        self.set_crossover_method(crossover.uniform)
     
     def set_fitness_method(self, funct):
         self._fitness_method = funct
@@ -29,6 +32,12 @@ class Model:
         """Try to use the selection methods from the selections module,
         unless you really know what you're doing."""
         self._selection_method = funct
+
+    def set_crossover_method(self,funct):
+        self._crossover_method = funct
+
+    def set_mutation_method(self,funct):
+        self._mutation_method = funct
 
     def evaluate(self,population):
         if not self._fitness_method:
@@ -47,16 +56,17 @@ class Model:
 
     def breed(self,parent_a,parent_b):
 
-        new_chromosome = random.choice([parent_a.chromosome,parent_b.chromosome])
+        children = []
+        new_chromosomes = [parent_a.chromosome,parent_b.chromosome] 
         if random.randint(0,100) < self.crossover_probability:
-            new_chromosome = []
-            crossover_point = random.randint(0,self.gene_length)
-            for i in range(self.gene_length):
-                new_chromosome.append(random.choice([parent_a.chromosome[i],parent_b.chromosome[i]]))
-        child = self._generate_individual()
-        child.chromosome = new_chromosome.copy()
-        child._mutation_method(child)
-        return child
+            new_chromosomes = self._crossover_method(parent_a,parent_b)
+
+        for chromosome in new_chromosomes:
+            child = self._generate_individual()
+            child.chromosome = chromosome.copy()
+            child._mutation_method(child)
+            children.append(child)
+        return children
 
     def select(self):
         """Select individuals to pass on their chromosome to the next generation
@@ -71,11 +81,14 @@ class Model:
             # pprint(["".join(i.chromosome) for i in next_generation])
 
 
-        for i in range(self.pop_size - self.elites): 
+        for i in range(self.pop_size//2 - self.elites): 
             parent_a = self._selection_method(current_gen)
             parent_b = self._selection_method(current_gen)
-            child = self.breed(parent_a,parent_b)
-            next_generation.append(child)
+            children = self.breed(parent_a,parent_b)
+            next_generation.extend(children)
+
+        while len(next_generation) > self.pop_size:
+            next_generation.pop(0)
 
         for individual in next_generation:
             individual.fitness = 1
@@ -141,7 +154,7 @@ class Model:
 
     def _generate_individual(self):
         """Randomly generates individual"""
-        chromosome = [random.choice(self.dna) for i in range(self.gene_length)]
+        chromosome = [random.choice(self.dna) for i in range(self.chromosome_length)]
         individual = Individual(chromosome,self.dna)
         individual._mutation_method = self._mutation_method
         individual.mutation_probability = self.mutation_probability

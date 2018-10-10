@@ -1,14 +1,8 @@
 #!/usr/bin/python
 from models import *
+import crossover
 import string
 import timeit
-
-# PASSWD = input("Give passwd: ")
-PASSWD = "____________________________________________"
-
-dna = string.ascii_letters + string.digits + string.punctuation + " " 
-gene_length = len(PASSWD)
-pop_size = 10
 
 def fitness(individual):
     """
@@ -22,15 +16,17 @@ def fitness(individual):
     fitness = score  * 100 / len(PASSWD)
     return fitness
 
-model = Model(
-        pop_size,
-        dna=dna,
-        gene_length=gene_length,
-)
+PASSWD = "________________________________________________________________________________________"
+dna = string.ascii_letters + string.digits + string.punctuation + " " 
+chromosome_length = len(PASSWD)
+pop_size = 100
+elites=10
 
+model = Model(pop_size,dna=dna,chromosome_length=chromosome_length,elites=elites)
 model.set_fitness_method(fitness)
+model.set_crossover_method(crossover.k_point)
 start = timeit.default_timer()
-model.run(max_fitness=100,interval=1)
+model.run(max_fitness=100,interval=10)
 print("0")
 end = timeit.default_timer()
 print(end-start)
